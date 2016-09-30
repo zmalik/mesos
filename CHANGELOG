@@ -14,7 +14,7 @@ All Issues:
   * [MESOS-5986] - SSL Socket CHECK can fail after socket receives EOF.
   * [MESOS-6104] - Potential FD double close in libevent's implementation of `sendfile`.
   * [MESOS-6152] - Resource leak in libevent_ssl_socket.cpp.
-
+  * [MESOS-6299] - Master doesn't remove task from pending when it is invalid
 
 Release Notes - Mesos - Version 0.27.3
 --------------------------------------
