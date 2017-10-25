@@ -142,7 +142,7 @@ Option<Error> validate(
     case mesos::master::Call::SUBSCRIBE:
       return None();
 
-    case mesos::agent::Call::KILL_CONTAINER: {
+    case mesos::master::Call::KILL_CONTAINER: {
       if (!call.has_kill_container()) {
         return Error("Expecting 'kill_container' to be present");
       }

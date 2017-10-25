@@ -2811,7 +2811,7 @@ string Master::Http::STATE_HELP()
 }
 
 Future<Response> Http::killContainer(
-    const mesos::agent::Call& call,
+    const mesos::master::Call& call,
     ContentType acceptType,
     const Option<Principal>& principal) const
 {
