@@ -2641,21 +2641,6 @@ Future<Response> Http::killContainer(
             "Container " + stringify(containerId) + " cannot be found");
       }
 
-      Framework* framework = slave->getFramework(executor->frameworkId);
-      CHECK_NOTNULL(framework);
-
-      Try<bool> approved = killApprover.get()->approved(
-          ObjectApprover::Object(
-              executor->info,
-              framework->info,
-              containerId));
-
-      if (approved.isError()) {
-        return Failure(approved.error());
-      } else if (!approved.get()) {
-        return Forbidden();
-      }
-
       Future<bool> kill = slave->containerizer->kill(containerId, signal);
 
       return kill
