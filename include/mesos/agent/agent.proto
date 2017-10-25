@@ -69,6 +69,8 @@ message Call {
 
     ATTACH_CONTAINER_INPUT = 18; // See 'AttachContainerInput' below.
     ATTACH_CONTAINER_OUTPUT = 19; // see 'AttachContainerOutput' below.
+
+    KILL_CONTAINER = 22;    // See 'KillContainer' below.
   }
 
   // Provides a snapshot of the current metrics tracked by the agent.
@@ -175,6 +177,14 @@ message Call {
     required ContainerID container_id = 1;
   }
 
+   // Kills the nested container. The signal (e.g., SIGTERM, SIGKILL, etc.)
+   // to be sent to the container can be specified in the 'signal' field.
+   // If 'signal' is not set, SIGKILL is used by default.
+   message KillContainer {
+     required ContainerID container_id = 1;
+     optional int32 signal = 2;
+   }
+
   optional Type type = 1;
 
   optional GetMetrics get_metrics = 2;
@@ -188,6 +198,7 @@ message Call {
   optional LaunchNestedContainerSession launch_nested_container_session = 9;
   optional AttachContainerInput attach_container_input = 10;
   optional AttachContainerOutput attach_container_output = 11;
+  optional KillContainer kill_container = 13;
 }
 
 

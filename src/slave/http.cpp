@@ -599,6 +599,9 @@ Future<Response> Http::_api(
 
     case mesos::agent::Call::ATTACH_CONTAINER_OUTPUT:
       return attachContainerOutput(call, mediaTypes, principal);
+
+    case mesos::agent::Call::KILL_CONTAINER:
+      return killContainer(call, mediaTypes.accept, principal);
   }
 
   UNREACHABLE();
@@ -2565,6 +2568,71 @@ Future<Response> Http::killNestedContainer(
       int signal = SIGKILL;
       if (call.kill_nested_container().has_signal()) {
         signal = call.kill_nested_container().signal();
+      }
+
+      Executor* executor = slave->getExecutor(containerId);
+      if (executor == nullptr) {
+        return NotFound(
+            "Container " + stringify(containerId) + " cannot be found");
+      }
+
+      Framework* framework = slave->getFramework(executor->frameworkId);
+      CHECK_NOTNULL(framework);
+
+      Try<bool> approved = killApprover.get()->approved(
+          ObjectApprover::Object(
+              executor->info,
+              framework->info,
+              containerId));
+
+      if (approved.isError()) {
+        return Failure(approved.error());
+      } else if (!approved.get()) {
+        return Forbidden();
+      }
+
+      Future<bool> kill = slave->containerizer->kill(containerId, signal);
+
+      return kill
+        .then([containerId](bool found) -> Response {
+          if (!found) {
+            return NotFound("Container '" + stringify(containerId) + "'"
+                            " cannot be found (or is already killed)");
+          }
+          return OK();
+        });
+    }));
+}
+
+Future<Response> Http::killContainer(
+    const mesos::agent::Call& call,
+    ContentType acceptType,
+    const Option<Principal>& principal) const
+{
+  CHECK_EQ(mesos::agent::Call::KILL_CONTAINER, call.type());
+  CHECK(call.has_kill_container());
+
+  Future<Owned<ObjectApprover>> approver;
+
+  if (slave->authorizer.isSome()) {
+    Option<authorization::Subject> subject = createSubject(principal);
+
+    approver = slave->authorizer.get()->getObjectApprover(
+        subject, authorization::KILL_CONTAINER);
+  } else {
+    approver = Owned<ObjectApprover>(new AcceptingObjectApprover());
+  }
+
+  return approver.then(defer(slave->self(),
+    [this, call](const Owned<ObjectApprover>& killApprover)
+        -> Future<Response> {
+      const ContainerID& containerId =
+        call.kill_container().container_id();
+
+      // SIGKILL is used by default if a signal is not specified.
+      int signal = SIGKILL;
+      if (call.kill_container().has_signal()) {
+        signal = call.kill_container().signal();
       }
 
       Executor* executor = slave->getExecutor(containerId);

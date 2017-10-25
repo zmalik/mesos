@@ -217,6 +217,10 @@ enum Action {
   // This action will not fill in any object fields, since a principal is
   // either allowed to mark an agent as gone or is unauthorized.
   MARK_AGENT_GONE = 34;
+
+  // This action will set objects of type `ExecutorInfo`, `FrameworkInfo`, and
+  // `ContainerID`.
+  KILL_CONTAINER = 35;
 }
 
 

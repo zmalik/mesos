@@ -273,6 +273,7 @@ public:
           aclObject.set_type(mesos::ACL::Entity::ANY);
 
           break;
+        case authorization::KILL_CONTAINER:
         case authorization::ATTACH_CONTAINER_INPUT:
         case authorization::ATTACH_CONTAINER_OUTPUT:
         case authorization::REMOVE_NESTED_CONTAINER:
@@ -664,6 +665,7 @@ public:
         case authorization::GET_ENDPOINT_WITH_PATH:
         case authorization::GET_MAINTENANCE_SCHEDULE:
         case authorization::GET_MAINTENANCE_STATUS:
+        case authorization::KILL_CONTAINER:
         case authorization::KILL_NESTED_CONTAINER:
         case authorization::LAUNCH_NESTED_CONTAINER:
         case authorization::LAUNCH_NESTED_CONTAINER_SESSION:
@@ -875,6 +877,7 @@ public:
       case authorization::GET_ENDPOINT_WITH_PATH:
       case authorization::GET_MAINTENANCE_SCHEDULE:
       case authorization::GET_MAINTENANCE_STATUS:
+      case authorization::KILL_CONTAINER:
       case authorization::KILL_NESTED_CONTAINER:
       case authorization::LAUNCH_NESTED_CONTAINER:
       case authorization::LAUNCH_NESTED_CONTAINER_SESSION:
@@ -972,7 +975,8 @@ public:
            action == authorization::KILL_NESTED_CONTAINER ||
            action == authorization::LAUNCH_NESTED_CONTAINER_SESSION ||
            action == authorization::REMOVE_NESTED_CONTAINER ||
-           action == authorization::ATTACH_CONTAINER_OUTPUT));
+           action == authorization::ATTACH_CONTAINER_OUTPUT ||
+           action == authorization::KILL_CONTAINER));
 
     Option<ContainerID> subjectContainerId;
     foreach (const Label& claim, subject->claims().labels()) {
@@ -1009,7 +1013,8 @@ public:
          action == authorization::KILL_NESTED_CONTAINER ||
          action == authorization::LAUNCH_NESTED_CONTAINER_SESSION ||
          action == authorization::REMOVE_NESTED_CONTAINER ||
-         action == authorization::ATTACH_CONTAINER_OUTPUT)) {
+         action == authorization::ATTACH_CONTAINER_OUTPUT ||
+         action == authorization::KILL_CONTAINER)) {
       return getImplicitExecutorObjectApprover(subject, action);
     }
 
@@ -1042,6 +1047,7 @@ public:
       case authorization::GET_ENDPOINT_WITH_PATH:
       case authorization::GET_MAINTENANCE_SCHEDULE:
       case authorization::GET_MAINTENANCE_STATUS:
+      case authorization::KILL_CONTAINER:
       case authorization::KILL_NESTED_CONTAINER:
       case authorization::MARK_AGENT_GONE:
       case authorization::REGISTER_AGENT:
@@ -1194,6 +1200,17 @@ private:
       case authorization::KILL_NESTED_CONTAINER:
         foreach (const ACL::KillNestedContainer& acl,
             acls.kill_nested_containers()) {
+          GenericACL acl_;
+          acl_.subjects = acl.principals();
+          acl_.objects = acl.users();
+
+          acls_.push_back(acl_);
+        }
+
+        return acls_;
+      case authorization::KILL_CONTAINER:
+        foreach (const ACL::KillContainer& acl,
+            acls.kill_containers()) {
           GenericACL acl_;
           acl_.subjects = acl.principals();
           acl_.objects = acl.users();
