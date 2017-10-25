@@ -2812,7 +2812,6 @@ string Master::Http::STATE_HELP()
 
 Future<Response> Master::Http::killContainer(
     const mesos::master::Call& call,
-    ContentType acceptType,
     const Option<Principal>& principal) const
 {
   CHECK_EQ(mesos::master::Call::KILL_CONTAINER, call.type());
