@@ -91,6 +91,8 @@ message Call {
     TEARDOWN = 31;       // See 'Teardown' below.
 
     MARK_AGENT_GONE = 32; // See 'MarkAgentGone' below.
+
+    KILL_CONTAINER = 33;  // See 'KillContainer' below.
   }
 
   // Provides a snapshot of the current metrics tracked by the master.
@@ -213,6 +215,14 @@ message Call {
     required AgentID agent_id = 1;
   }
 
+  // Kills the Container. The signal (e.g., SIGTERM, SIGKILL, etc.)
+  // to be sent to the container can be specified in the 'signal' field.
+  // If 'signal' is not set, SIGKILL is used by default.
+  message KillContainer {
+    required ContainerID container_id = 1;
+    optional int32 signal = 2;
+  }
+
   optional Type type = 1;
 
   optional GetMetrics get_metrics = 2;
@@ -231,6 +241,7 @@ message Call {
   optional RemoveQuota remove_quota = 15;
   optional Teardown teardown = 16;
   optional MarkAgentGone mark_agent_gone = 17;
+  optional KillContainer kill_container = 18;
 }
 
 

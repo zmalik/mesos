@@ -5368,18 +5368,18 @@ void Master::killTask(
   call.mutable_task_id()->CopyFrom(taskId);
   // NOTE: Kill policy in kill task is not supported for schedulers
   // sending `KillTaskMessage` instead of `scheduler::Call::Kill`.
+  const Option<SlaveID> slaveId =
+      kill.has_slave_id() ? Option<SlaveID>(kill.slave_id()) : None();
 
-  kill(framework, call);
+  kill(framework, call.task_id(), slaveId);
 }
 
-
-void Master::kill(Framework* framework, const scheduler::Call::Kill& kill)
+void Master::kill(
+        Framework* framework,
+        const TaskId& taskId,
+        const Option<SlaveID>& slaveId)
 {
   CHECK_NOTNULL(framework);
-
-  const TaskID& taskId = kill.task_id();
-  const Option<SlaveID> slaveId =
-    kill.has_slave_id() ? Option<SlaveID>(kill.slave_id()) : None();
 
   LOG(INFO) << "Processing KILL call for task '" << taskId << "'"
             << " of framework " << *framework;

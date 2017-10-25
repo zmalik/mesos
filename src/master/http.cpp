@@ -2810,6 +2810,80 @@ string Master::Http::STATE_HELP()
         "See the authorization documentation for details."));
 }
 
+Future<Response> Http::killContainer(
+    const mesos::agent::Call& call,
+    ContentType acceptType,
+    const Option<Principal>& principal) const
+{
+  CHECK_EQ(mesos::master::Call::KILL_CONTAINER, call.type());
+  CHECK(call.has_kill_container());
+
+  Future<Owned<ObjectApprover>> approver;
+
+  if (master->authorizer.isSome()) {
+      Option<authorization::Subject> subject = createSubject(principal);
+
+      frameworksApprover = master->authorizer.get()->getObjectApprover(
+          subject, authorization::VIEW_FRAMEWORK);
+
+      tasksApprover = master->authorizer.get()->getObjectApprover(
+          subject, authorization::VIEW_TASK);
+  } else {
+      frameworksApprover = Owned<ObjectApprover>(new AcceptingObjectApprover());
+      tasksApprover = Owned<ObjectApprover>(new AcceptingObjectApprover());
+  }
+
+  return approver.then(defer(master->self(),
+    [this, call](const Owned<ObjectApprover>& killApprover)
+        -> Future<Response> {
+      const ContainerID& containerId =
+        call.kill_container().container_id();
+
+      // SIGKILL is used by default if a signal is not specified.
+      int signal = SIGKILL;
+      if (call.kill_container().has_signal()) {
+        signal = call.kill_container().signal();
+      }
+
+
+      Executor* executor = master->getExecutor(containerId);
+      if (executor == nullptr) {
+        return NotFound(
+            "Container " + stringify(containerId) + " cannot be found");
+      }
+
+      Framework* framework = master->getFramework(executor->frameworkId);
+      CHECK_NOTNULL(framework);
+
+      Try<bool> approved = killApprover.get()->approved(
+          ObjectApprover::Object(
+              executor->info,
+              framework->info,
+              containerId));
+
+      if (approved.isError()) {
+        return Failure(approved.error());
+      } else if (!approved.get()) {
+        return Forbidden();
+      }
+
+      const Option<SlaveID> slaveId =
+            executor->has_slave_id() ?
+                Option<SlaveID>(executor->slaveId()) : None();
+
+      Future<bool> kill = master->kill(framework, containerId, slaveId);
+
+      return kill
+        .then([containerId](bool found) -> Response {
+          if (!found) {
+            return NotFound("Container '" + stringify(containerId) + "'"
+                            " cannot be found (or is already killed)");
+          }
+          return OK();
+        });
+    }));
+}
+
 
 Future<Response> Master::Http::state(
     const Request& request,

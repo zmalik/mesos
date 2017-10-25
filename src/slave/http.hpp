@@ -231,11 +231,6 @@ private:
       ContentType acceptType,
       const Option<process::http::authentication::Principal>& principal) const;
 
-  process::Future<process::http::Response> killContainer(
-      const mesos::agent::Call& call,
-      ContentType acceptType,
-      const Option<process::http::authentication::Principal>& principal) const;
-
   process::Future<process::http::Response> removeNestedContainer(
       const mesos::agent::Call& call,
       ContentType acceptType,

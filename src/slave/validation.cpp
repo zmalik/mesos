@@ -238,22 +238,6 @@ Option<Error> validate(
       return None();
     }
 
-    case mesos::agent::Call::KILL_CONTAINER: {
-      if (!call.has_kill_container()) {
-        return Error("Expecting 'kill_container' to be present");
-      }
-
-      Option<Error> error = validation::container::validateContainerId(
-          call.kill_nested_container().container_id());
-
-      if (error.isSome()) {
-        return Error("'kill_container.container_id' is invalid"
-                     ": " + error->message);
-      }
-
-      return None();
-    }
-
     case mesos::agent::Call::REMOVE_NESTED_CONTAINER: {
       if (!call.has_remove_nested_container()) {
         return Error("Expecting 'remove_nested_container' to be present");
