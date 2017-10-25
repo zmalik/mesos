@@ -2810,7 +2810,7 @@ string Master::Http::STATE_HELP()
         "See the authorization documentation for details."));
 }
 
-Future<Response> Http::killContainer(
+Future<Response> Master::Http::killContainer(
     const mesos::master::Call& call,
     ContentType acceptType,
     const Option<Principal>& principal) const
